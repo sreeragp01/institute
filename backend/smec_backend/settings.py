@@ -1,17 +1,14 @@
-"""
-Django settings for smec_backend project.
-"""
-
+import os
 from pathlib import Path
 from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-smec-connect-dev-key-change-in-production'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-smec-connect-dev-key-change-in-production')
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -41,6 +38,9 @@ INSTALLED_APPS = [
     'examinations',
     'certificates',
     'placements',
+    'admissions',
+    'support',
+    'audit',
 ]
 
 

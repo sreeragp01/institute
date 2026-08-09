@@ -203,13 +203,27 @@ def seed():
         defaults={'scheduled_at': datetime.now(), 'duration_minutes': 60, 'total_marks': 100, 'pass_marks': 40}
     )
 
-    Question.objects.get_or_create(
-        exam=exam,
-        question_text='What is the output of len([1, 2, 3, 4]) in Python?',
-        defaults={'options': ['3', '4', '5', 'Error'], 'correct_option': 1, 'marks': 50}
+    # 10. Seed Admissions, Support Tickets & Audit Logs
+    from admissions.models import Enquiry, LeadSource, EnquiryStatus
+    from support.models import SupportTicket, TicketCategory, TicketPriority, TicketStatus
+    from audit.models import AuditLog
+
+    Enquiry.objects.get_or_create(
+        institute=smec, candidate_name='Rohan Kumar', email='rohan@gmail.com', phone_number='+91 9876001122',
+        defaults={'interested_course': 'Computer Science & AI', 'source': LeadSource.WEBSITE, 'status': EnquiryStatus.NEW, 'notes': 'Inquired about batch timings and scholarship eligibility.'}
     )
 
-    print("Phase 3 data (Full Multi-Role Attendance, Assignments, Announcements, Exams, Public Certificates, Placement Drives) seeded successfully!")
+    SupportTicket.objects.get_or_create(
+        institute=smec, created_by=smec_student, subject='Fee Payment Receipt Inquiry',
+        defaults={'category': TicketCategory.FEE_BILLING, 'priority': TicketPriority.MEDIUM, 'status': TicketStatus.OPEN, 'description': 'Requesting digital invoice receipt for initial admission fee.'}
+    )
+
+    AuditLog.objects.get_or_create(
+        institute=smec, actor=smec_admin, action='UPDATED_INSTITUTE_SETTINGS',
+        defaults={'target_model': 'Institute', 'details': 'Updated primary brand colors and contact phone.', 'ip_address': '127.0.0.1'}
+    )
+
+    print("SaaS Modules Data (Admissions CRM, Support Tickets, Audit Logs, Multi-Role Attendance, Assignments, Exams) seeded successfully!")
 
 if __name__ == '__main__':
     seed()
