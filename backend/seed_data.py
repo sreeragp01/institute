@@ -99,6 +99,15 @@ def seed():
         defaults={'start_date': date.today() - timedelta(days=60), 'end_date': date.today() + timedelta(days=120), 'trainer': smec_trainer}
     )
 
+    sub_python, _ = Subject.objects.get_or_create(
+        course=c_smec, code='PY-201',
+        defaults={'name': 'Python Programming & AI Basics'}
+    )
+    sub_ds, _ = Subject.objects.get_or_create(
+        course=c_smec, code='DS-202',
+        defaults={'name': 'Data Structures & Algorithms'}
+    )
+
     st_prof, _ = StudentProfile.objects.get_or_create(
         user=smec_student,
         defaults={'roll_number': 'SMEC-2026-001', 'course': c_smec, 'batch': b_smec, 'guardian_name': 'Rajesh Sharma', 'guardian_contact': '+91 9988776655'}
@@ -114,7 +123,52 @@ def seed():
     p_prof, _ = ParentProfile.objects.get_or_create(user=smec_parent)
     p_prof.students.add(st_prof)
 
-    # 6. Seed Payments & Certificates
+    # 6. Seed Attendance History across 10 days
+    from attendance.models import AttendanceSession, AttendanceRecord
+    for i in range(10):
+        day = date.today() - timedelta(days=i)
+        if day.weekday() < 5: # Weekdays only
+            session, _ = AttendanceSession.objects.get_or_create(
+                institute=smec, batch=b_smec, subject=sub_python, date=day,
+                defaults={'trainer': smec_trainer, 'qr_code_secret': f'SESSION-QR-{i}'}
+            )
+            AttendanceRecord.objects.get_or_create(
+                session=session, student=smec_student,
+                defaults={'status': AttendanceRecord.Status.PRESENT if i % 4 != 0 else AttendanceRecord.Status.ABSENT}
+            )
+
+    # 7. Seed Assignments & Submissions
+    from assignments.models import Assignment, Submission
+    assign_1, _ = Assignment.objects.get_or_create(
+        batch=b_smec, subject=sub_python, title='Neural Network Pipeline Implementation',
+        defaults={
+            'trainer': smec_trainer,
+            'description': 'Build a simple multi-layer perceptron using NumPy and evaluate accuracy.',
+            'due_date': datetime.now() + timedelta(days=5),
+            'file_url': 'https://smec.edu/assignments/nn_pipeline.pdf'
+        }
+    )
+    Submission.objects.get_or_create(
+        assignment=assign_1, student=smec_student,
+        defaults={'file_url': 'https://github.com/ananya/smec_nn_assignment', 'grade': 'A+', 'feedback': 'Outstanding code modularity and documentation.'}
+    )
+
+    # 8. Seed Announcements & Notifications
+    from notifications.models import Announcement, Event, Notification
+    Announcement.objects.get_or_create(
+        institute=smec, title='Annual Tech Symposium & Hackathon 2026',
+        defaults={'body': 'Join us on Friday for the SMEC Innovation Expo! Projects will be presented to industry leaders.', 'posted_by': smec_admin}
+    )
+    Event.objects.get_or_create(
+        institute=smec, title='AI Career Guidance & Campus Recruitment Drive',
+        defaults={'description': 'Top AI startups and MNCs will conduct interviews.', 'event_date': datetime.now() + timedelta(days=7), 'venue': 'SMEC Auditorium', 'organizer': 'Placement Cell'}
+    )
+    Notification.objects.get_or_create(
+        user=smec_student, title='Attendance Alert: 92% Monthly Attendance',
+        defaults={'message': 'Great job Ananya! Your attendance is above the required threshold of 85%.', 'channel': Notification.Channel.IN_APP}
+    )
+
+    # 9. Seed Payments & Certificates
     FeePayment.objects.get_or_create(
         institute=smec,
         student=smec_student,
@@ -155,7 +209,7 @@ def seed():
         defaults={'options': ['3', '4', '5', 'Error'], 'correct_option': 1, 'marks': 50}
     )
 
-    print("Phase 3 data (Exams, Public Verification Certificates, Placement Drives) seeded successfully!")
+    print("Phase 3 data (Full Multi-Role Attendance, Assignments, Announcements, Exams, Public Certificates, Placement Drives) seeded successfully!")
 
 if __name__ == '__main__':
     seed()

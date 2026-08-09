@@ -152,16 +152,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
 
                   const SizedBox(height: 24),
-                  Text('Quick Portal Access:', style: AppTypography.subtitle(color: AppColors.textMuted)),
+                  Text('⚡ Instant Presentation Demo Login:', style: AppTypography.subtitle(color: AppColors.cyberCyan)),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _demoChip('Student', 'student@smec.edu', 'student123'),
-                      _demoChip('Trainer / Faculty', 'trainer@smec.edu', 'trainer123'),
-                      _demoChip('Institute Admin', 'admin@smec.edu', 'admin123'),
-                      _demoChip('Parent Portal', 'parent@smec.edu', 'parent123'),
+                      _demoChip('🎓 Student', 'student@smec.edu', 'student123'),
+                      _demoChip('👨‍🏫 Trainer / Faculty', 'trainer@smec.edu', 'trainer123'),
+                      _demoChip('🏫 Institute Admin', 'admin@smec.edu', 'admin123'),
+                      _demoChip('🌐 Super Admin', 'superadmin@smecconnect.com', 'superadmin123'),
+                      _demoChip('👨‍👩‍👧 Parent', 'parent@smec.edu', 'parent123'),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -186,9 +187,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _demoChip(String roleLabel, String email, String pass) {
     return ActionChip(
       backgroundColor: AppColors.darkCardSurface,
-      side: const BorderSide(color: AppColors.glassBorder),
-      label: Text(roleLabel, style: AppTypography.caption(color: AppColors.cyberCyan)),
-      onPressed: () => _fillDemoCredentials('SMEC', email, pass),
+      side: const BorderSide(color: AppColors.cyberCyan, width: 1),
+      avatar: const Icon(Icons.bolt, size: 14, color: AppColors.amberGold),
+      label: Text(roleLabel, style: AppTypography.caption(color: Colors.white)),
+      onPressed: () {
+        _fillDemoCredentials('SMEC', email, pass);
+        _submit();
+      },
     );
   }
 }
