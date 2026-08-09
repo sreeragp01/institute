@@ -52,6 +52,7 @@ class FeeInvoiceDetailView(APIView):
         except FeePayment.DoesNotExist:
             return Response({'detail': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        amt = float(payment.amount)
         return Response({
             'invoice_number': f"INV-{payment.id:06d}",
             'student_name': payment.student.get_full_name() or payment.student.email,
@@ -63,9 +64,9 @@ class FeeInvoiceDetailView(APIView):
             'status': payment.status,
             'transaction_id': payment.transaction_id,
             'breakdown': [
-                {'description': 'Tuition & Academic Training Fee', 'amount': str(payment.amount * 0.85)},
-                {'description': 'Lab Workstation & AI Cloud Access', 'amount': str(payment.amount * 0.10)},
-                {'description': 'Library & Examination Fee', 'amount': str(payment.amount * 0.05)},
+                {'description': 'Tuition & Academic Training Fee', 'amount': f"{amt * 0.85:.2f}"},
+                {'description': 'Lab Workstation & AI Cloud Access', 'amount': f"{amt * 0.10:.2f}"},
+                {'description': 'Library & Examination Fee', 'amount': f"{amt * 0.05:.2f}"},
             ]
         })
 

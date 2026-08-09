@@ -20,7 +20,7 @@ class InvoiceReceiptScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: AppColors.primaryNavy),
+                      icon: const Icon(Icons.arrow_back_rounded, color: AppColors.cyberCyan),
                       onPressed: () => context.pop(),
                     ),
                     Text('Fee Invoice & Receipt', style: AppTypography.header2(color: AppColors.amberGold)),
@@ -64,7 +64,7 @@ class InvoiceReceiptScreen extends StatelessWidget {
                         Text('Institution: SMEC Institute of Technology', style: AppTypography.caption(color: AppColors.textSecondary)),
                         const SizedBox(height: 16),
 
-                        Text('Payment Breakdown', style: AppTypography.subtitle(color: AppColors.primaryNavy)),
+                        Text('Payment Breakdown', style: AppTypography.subtitle(color: AppColors.cyberCyan)),
                         const SizedBox(height: 8),
                         _buildLineItem('Tuition & Academic Training', '₹38,250.00'),
                         _buildLineItem('Lab Workstation & AI Cloud Access', '₹4,500.00'),
