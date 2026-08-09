@@ -87,6 +87,14 @@ class StudentProfileScreen extends ConsumerWidget {
                 Text('Student Actions & Utilities', style: AppTypography.subtitle()),
                 const SizedBox(height: 12),
                 _actionTile(
+                  icon: Icons.badge_rounded,
+                  title: 'Digital Student ID Card',
+                  subtitle: 'Show digital ID & dynamic QR badge for campus entry',
+                  color: AppColors.cyberCyan,
+                  onTap: () => context.push('/student-qr-card'),
+                ),
+                const SizedBox(height: 10),
+                _actionTile(
                   icon: Icons.event_note_rounded,
                   title: 'Apply for Leave',
                   subtitle: 'Submit absence application & view status',

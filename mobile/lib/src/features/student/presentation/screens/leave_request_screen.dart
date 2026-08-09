@@ -66,7 +66,7 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryNavy, size: 20),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.cyberCyan, size: 20),
                       onPressed: () => context.pop(),
                     ),
                     const SizedBox(width: 8),
@@ -123,7 +123,9 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
 
                 Text('Previous Leave Requests', style: AppTypography.subtitle()),
                 const SizedBox(height: 12),
-                _pastLeaveCard('Medical Absence', 'July 14 - July 15, 2024', 'APPROVED', AppColors.emeraldGreen),
+                _pastLeaveCard('Attending Hackathon Event', '2026-08-10 to 2026-08-12', 'PENDING', AppColors.amberGold),
+                const SizedBox(height: 10),
+                _pastLeaveCard('Medical Absence', 'July 14 - July 15, 2026', 'APPROVED', AppColors.emeraldGreen),
               ],
             ),
           ),
@@ -137,18 +139,22 @@ class _LeaveRequestScreenState extends State<LeaveRequestScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: AppTypography.subtitle()),
-              Text(dates, style: AppTypography.caption(color: AppColors.textMuted)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTypography.subtitle()),
+                const SizedBox(height: 4),
+                Text(dates, style: AppTypography.caption(color: AppColors.textMuted)),
+              ],
+            ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: color),
             ),
             child: Text(status, style: AppTypography.microTag(color: color)),
           ),
