@@ -176,9 +176,13 @@ class LeaveRequestDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def patch(self, request, pk):
-        leave_req = LeaveRequest.objects.filter(id=pk).first()
+        if request.user.role == User.Role.SUPER_ADMIN:
+            leave_req = LeaveRequest.objects.filter(id=pk).first()
+        else:
+            leave_req = LeaveRequest.objects.filter(id=pk, student__institute=request.user.institute).first()
+
         if not leave_req:
-            return Response({'detail': 'Leave request not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Leave request not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
 
         if request.user.role not in [User.Role.ADMIN, User.Role.SUPER_ADMIN, User.Role.TRAINER]:
             return Response({'detail': 'Only Staff or Admins can review leave requests.'}, status=status.HTTP_403_FORBIDDEN)

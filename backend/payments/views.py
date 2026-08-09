@@ -22,10 +22,16 @@ class PayFeeOnlineView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
-        try:
-            payment = FeePayment.objects.get(id=pk)
-        except FeePayment.DoesNotExist:
-            return Response({'detail': 'Fee payment record not found'}, status=status.HTTP_404_NOT_FOUND)
+        user = request.user
+        if user.role == User.Role.SUPER_ADMIN:
+            payment = FeePayment.objects.filter(id=pk).first()
+        elif user.role == User.Role.STUDENT:
+            payment = FeePayment.objects.filter(id=pk, student=user).first()
+        else:
+            payment = FeePayment.objects.filter(id=pk, institute=user.institute).first()
+
+        if not payment:
+            return Response({'detail': 'Fee payment record not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
 
         txn_id = f"TXN-{uuid.uuid4().hex[:10].upper()}"
         payment.status = FeePayment.Status.PAID
@@ -47,10 +53,16 @@ class FeeInvoiceDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, pk):
-        try:
-            payment = FeePayment.objects.get(id=pk)
-        except FeePayment.DoesNotExist:
-            return Response({'detail': 'Invoice not found'}, status=status.HTTP_404_NOT_FOUND)
+        user = request.user
+        if user.role == User.Role.SUPER_ADMIN:
+            payment = FeePayment.objects.filter(id=pk).first()
+        elif user.role == User.Role.STUDENT:
+            payment = FeePayment.objects.filter(id=pk, student=user).first()
+        else:
+            payment = FeePayment.objects.filter(id=pk, institute=user.institute).first()
+
+        if not payment:
+            return Response({'detail': 'Invoice not found or access denied.'}, status=status.HTTP_404_NOT_FOUND)
 
         amt = float(payment.amount)
         return Response({
