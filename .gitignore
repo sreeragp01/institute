@@ -1,0 +1,58 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Django & SQLite
+*.sqlite3
+*.db
+local_settings.py
+db.sqlite3
+media/
+staticfiles/
+
+# Environment / Secret variables
+.env
+.env.*
+!.env.example
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+*.ipr
+*.iws
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Flutter / Dart / Mobile
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/mobile/build/
+build/
+/mobile/android/app/debug
+/mobile/android/app/profile
+/mobile/android/app/release
+/mobile/android/.gradle
+.gradle/
