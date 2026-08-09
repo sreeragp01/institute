@@ -152,7 +152,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
 
                   const SizedBox(height: 24),
-                  Text('⚡ Instant Presentation Demo Login:', style: AppTypography.subtitle(color: AppColors.cyberCyan)),
+                  Text('Demo Accounts Auto-Fill:', style: AppTypography.subtitle(color: AppColors.textMuted)),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
@@ -187,12 +187,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _demoChip(String roleLabel, String email, String pass) {
     return ActionChip(
       backgroundColor: AppColors.darkCardSurface,
-      side: const BorderSide(color: AppColors.cyberCyan, width: 1),
-      avatar: const Icon(Icons.bolt, size: 14, color: AppColors.amberGold),
-      label: Text(roleLabel, style: AppTypography.caption(color: Colors.white)),
+      side: const BorderSide(color: AppColors.glassBorder),
+      avatar: const Icon(Icons.touch_app, size: 14, color: AppColors.cyberCyan),
+      label: Text(roleLabel, style: AppTypography.caption(color: AppColors.cyberCyan)),
       onPressed: () {
         _fillDemoCredentials('SMEC', email, pass);
-        _submit();
       },
     );
   }
