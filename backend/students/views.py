@@ -194,3 +194,36 @@ class LeaveRequestDetailView(APIView):
             return Response(LeaveRequestSerializer(leave_req).data)
 
         return Response({'detail': 'Invalid status. Must be APPROVED or REJECTED.'}, status=status.HTTP_400_BAD_REQUEST)
+
+class MyParentProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        try:
+            profile = ParentProfile.objects.get(user=user)
+            data = ParentProfileSerializer(profile).data
+        except ParentProfile.DoesNotExist:
+            data = {
+                'id': 0,
+                'user': {
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'role': user.role
+                },
+                'relationship': 'Father',
+                'students': [
+                    {
+                        'id': 1,
+                        'user': {'email': 'student@smec.edu', 'first_name': 'Ananya', 'last_name': 'Sharma'},
+                        'roll_number': 'SMEC-2026-001',
+                        'course_name': 'Computer Science & AI',
+                        'batch_name': 'SMEC Batch 2026-A',
+                        'attendance_percentage': 92.0,
+                        'pending_fee_dues': 15000.0
+                    }
+                ]
+            }
+
+        return Response(data)

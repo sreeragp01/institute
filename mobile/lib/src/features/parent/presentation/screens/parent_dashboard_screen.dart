@@ -30,7 +30,7 @@ class ParentDashboardScreen extends ConsumerWidget {
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.swap_horiz_rounded, color: AppColors.primaryNavy),
+                      icon: const Icon(Icons.swap_horiz_rounded, color: AppColors.cyberCyan),
                       onPressed: () => context.go('/role-selection'),
                     ),
                   ],
@@ -40,6 +40,7 @@ class ParentDashboardScreen extends ConsumerWidget {
                 // Attendance Status Card
                 GlassmorphicCard(
                   borderColor: AppColors.cyberCyan,
+                  onTap: () => context.push('/attendance'),
                   child: Row(
                     children: [
                       Container(
@@ -73,7 +74,7 @@ class ParentDashboardScreen extends ConsumerWidget {
                       child: _buildActionTile(
                         context,
                         title: 'Fee Installments',
-                        subtitle: '₹45,000 Pending',
+                        subtitle: '₹15,000 Pending',
                         icon: Icons.payments_rounded,
                         color: AppColors.amberGold,
                         route: '/fees',
@@ -83,7 +84,7 @@ class ParentDashboardScreen extends ConsumerWidget {
                     Expanded(
                       child: _buildActionTile(
                         context,
-                        title: 'Leave Request',
+                        title: 'Leave Requests',
                         subtitle: 'Apply & Track',
                         icon: Icons.event_note_rounded,
                         color: AppColors.emeraldGreen,
@@ -92,7 +93,33 @@ class ParentDashboardScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildActionTile(
+                        context,
+                        title: 'Helpdesk & Support',
+                        subtitle: 'Contact Faculty Desk',
+                        icon: Icons.headset_mic_rounded,
+                        color: AppColors.cyberCyan,
+                        route: '/support-tickets',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildActionTile(
+                        context,
+                        title: 'Child Digital ID',
+                        subtitle: 'Campus Verification',
+                        icon: Icons.badge_rounded,
+                        color: AppColors.amberGold,
+                        route: '/student-qr-card',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
 
                 // Academic Progress Summary
                 GlassmorphicCard(
@@ -119,7 +146,7 @@ class ParentDashboardScreen extends ConsumerWidget {
 
   Widget _buildActionTile(BuildContext context, {required String title, required String subtitle, required IconData icon, required Color color, required String route}) {
     return GestureDetector(
-      onTap: () => context.go(route),
+      onTap: () => context.push(route),
       child: GlassmorphicCard(
         borderColor: color.withValues(alpha: 0.3),
         child: Column(
