@@ -14,6 +14,9 @@ import '../../../staff/presentation/screens/manual_roll_call_screen.dart';
 import '../../../attendance/presentation/screens/qr_generator_screen.dart';
 import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../../admin/presentation/screens/super_admin_console_screen.dart';
+import '../../../admin/presentation/screens/admissions_crm_screen.dart';
+import '../../../admin/presentation/screens/audit_log_screen.dart';
+import '../../../support/presentation/screens/support_tickets_screen.dart';
 
 class MainShellScreen extends ConsumerStatefulWidget {
   const MainShellScreen({super.key});
@@ -45,16 +48,24 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
       const AssignmentListScreen(),
     ];
 
-    final List<Widget> adminTabs = [
+    final List<Widget> instituteAdminTabs = [
       const AdminDashboardScreen(),
-      const SuperAdminConsoleScreen(),
+      const AdmissionsCRMScreen(),
       const AttendanceDashboardScreen(),
       const FeeStatusScreen(),
     ];
 
+    final List<Widget> superAdminTabs = [
+      const SuperAdminConsoleScreen(),
+      const AdminDashboardScreen(),
+      const AuditLogScreen(),
+      const SupportTicketsScreen(),
+    ];
+
     List<Widget> activeTabs = studentTabs;
     if (role == 'TRAINER') activeTabs = staffTabs;
-    if (role == 'ADMIN' || role == 'SUPER_ADMIN') activeTabs = adminTabs;
+    if (role == 'ADMIN') activeTabs = instituteAdminTabs;
+    if (role == 'SUPER_ADMIN') activeTabs = superAdminTabs;
 
     final safeIndex = _currentIndex < activeTabs.length ? _currentIndex : 0;
 
@@ -100,12 +111,19 @@ class _MainShellScreenState extends ConsumerState<MainShellScreen> {
         BottomNavigationBarItem(icon: Icon(Icons.how_to_reg_rounded), label: 'Manual Roll'),
         BottomNavigationBarItem(icon: Icon(Icons.assignment_outlined), label: 'Grading'),
       ];
-    } else if (role == 'ADMIN' || role == 'SUPER_ADMIN') {
+    } else if (role == 'ADMIN') {
       return const [
         BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Overview'),
-        BottomNavigationBarItem(icon: Icon(Icons.admin_panel_settings_rounded), label: 'Tenants'),
+        BottomNavigationBarItem(icon: Icon(Icons.group_add_rounded), label: 'Admissions'),
         BottomNavigationBarItem(icon: Icon(Icons.event_available_rounded), label: 'Attendance'),
         BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet_rounded), label: 'Fees'),
+      ];
+    } else if (role == 'SUPER_ADMIN') {
+      return const [
+        BottomNavigationBarItem(icon: Icon(Icons.admin_panel_settings_rounded), label: 'SaaS Console'),
+        BottomNavigationBarItem(icon: Icon(Icons.domain_rounded), label: 'Institutes'),
+        BottomNavigationBarItem(icon: Icon(Icons.security_rounded), label: 'Audit Logs'),
+        BottomNavigationBarItem(icon: Icon(Icons.headset_mic_rounded), label: 'Helpdesk'),
       ];
     }
 
