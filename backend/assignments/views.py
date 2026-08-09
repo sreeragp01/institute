@@ -28,3 +28,22 @@ class SubmitAssignmentView(APIView):
         )
 
         return Response(SubmissionSerializer(submission).data, status=status.HTTP_201_CREATED)
+
+class GradeSubmissionView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, submission_id):
+        try:
+            submission = Submission.objects.get(id=submission_id)
+        except Submission.DoesNotExist:
+            return Response({'detail': 'Submission not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        grade = request.data.get('grade')
+        feedback = request.data.get('feedback', '')
+
+        if grade is not None:
+            submission.grade = str(grade)
+            submission.feedback = feedback
+            submission.save()
+
+        return Response(SubmissionSerializer(submission).data)

@@ -73,7 +73,7 @@ class StaffDashboardScreen extends ConsumerWidget {
                     Expanded(
                       child: GlassmorphicCard(
                         borderColor: AppColors.emeraldGreen.withValues(alpha: 0.4),
-                        onTap: () => context.push('/attendance'),
+                        onTap: () => context.push('/manual-roll-call'),
                         child: Column(
                           children: [
                             const Icon(Icons.how_to_reg_rounded, size: 36, color: AppColors.emeraldGreen),
