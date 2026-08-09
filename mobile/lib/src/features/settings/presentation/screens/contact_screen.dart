@@ -129,7 +129,7 @@ class _ContactScreenState extends State<ContactScreen> with SingleTickerProvider
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primaryNavy, size: 20),
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.cyberCyan, size: 20),
                       onPressed: () => context.pop(),
                     ),
                     const SizedBox(width: 8),
