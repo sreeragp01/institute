@@ -28,7 +28,9 @@ import '../features/student/presentation/screens/student_qr_card_screen.dart';
 import '../features/certificates/presentation/screens/certificate_verification_screen.dart';
 import '../features/examinations/presentation/screens/exam_take_screen.dart';
 
-
+import '../features/admin/presentation/screens/admissions_crm_screen.dart';
+import '../features/support/presentation/screens/support_tickets_screen.dart';
+import '../features/admin/presentation/screens/audit_log_screen.dart';
 import '../features/notifications/presentation/screens/notification_center_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
 import '../features/settings/presentation/screens/legal_document_screen.dart';
@@ -38,6 +40,18 @@ import '../features/settings/presentation/screens/contact_screen.dart';
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
+    GoRoute(
+      path: '/admissions-crm',
+      builder: (context, state) => const AdmissionsCRMScreen(),
+    ),
+    GoRoute(
+      path: '/support-tickets',
+      builder: (context, state) => const SupportTicketsScreen(),
+    ),
+    GoRoute(
+      path: '/audit-logs',
+      builder: (context, state) => const AuditLogScreen(),
+    ),
     GoRoute(
       path: '/contact',
       builder: (context, state) => const ContactScreen(),

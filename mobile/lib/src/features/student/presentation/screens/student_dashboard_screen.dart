@@ -74,7 +74,7 @@ class StudentDashboardScreen extends ConsumerWidget {
                           onPressed: () => context.push('/settings'),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.notifications_outlined, color: AppColors.primaryNavy),
+                          icon: const Icon(Icons.notifications_outlined, color: AppColors.amberGold),
                           onPressed: () => _showNotificationsModal(context),
                         ),
                         IconButton(
@@ -188,10 +188,10 @@ class StudentDashboardScreen extends ConsumerWidget {
                     Expanded(
                       child: _quickActionButton(
                         context,
-                        icon: Icons.work_history_rounded,
-                        label: 'Placements',
+                        icon: Icons.support_agent_rounded,
+                        label: 'Helpdesk',
                         color: AppColors.cyberCyan,
-                        onTap: () => context.push('/placements'),
+                        onTap: () => context.push('/support-tickets'),
                       ),
                     ),
                     const SizedBox(width: 12),

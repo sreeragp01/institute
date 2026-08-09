@@ -137,6 +137,27 @@ class AdminDashboardScreen extends ConsumerWidget {
           Text('Admin Management Controls', style: AppTypography.subtitle()),
           const SizedBox(height: 12),
           _adminActionTile(
+            Icons.group_add_rounded,
+            'Admissions & Lead CRM',
+            'Track prospect student inquiries & lead pipeline',
+            onTap: () => context.push('/admissions-crm'),
+          ),
+          const SizedBox(height: 10),
+          _adminActionTile(
+            Icons.headset_mic_rounded,
+            'Helpdesk & Support Tickets',
+            'View & respond to student and parent inquiries',
+            onTap: () => context.push('/support-tickets'),
+          ),
+          const SizedBox(height: 10),
+          _adminActionTile(
+            Icons.security_rounded,
+            'System Activity Audit Logs',
+            'Review operational activity and administrative logs',
+            onTap: () => context.push('/audit-logs'),
+          ),
+          const SizedBox(height: 10),
+          _adminActionTile(
             Icons.person_add_outlined,
             'User Management',
             'View & manage student profiles & staff',
