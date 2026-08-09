@@ -84,7 +84,12 @@ class ListUsersView(generics.ListAPIView):
             queryset = queryset.filter(role=role)
         return queryset
 
-# Mobile OTP & Password Recovery
+import secrets
+from django.utils import timezone
+from datetime import timedelta
+from .models import EmailOTP
+
+# Mobile OTP & Password Recovery Engine
 class RequestOTPView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -92,11 +97,23 @@ class RequestOTPView(APIView):
         phone_or_email = request.data.get('phone_or_email')
         if not phone_or_email:
             return Response({'detail': 'Phone number or email is required'}, status=status.HTTP_400_BAD_REQUEST)
-        # Mock OTP generation for demonstration/testing
+        
+        # Generate cryptographically secure 6-digit random OTP
+        otp_code = str(secrets.randbelow(900000) + 100000)
+        expires_at = timezone.now() + timedelta(minutes=10)
+
+        # Save to EmailOTP database table
+        EmailOTP.objects.create(
+            email_or_phone=phone_or_email,
+            otp_code=otp_code,
+            expires_at=expires_at
+        )
+
         return Response({
-            'message': 'OTP sent successfully',
-            'otp_code': '123456', # Demo fixed OTP
-            'target': phone_or_email
+            'message': 'OTP generated and sent successfully (valid for 10 minutes)',
+            'otp_code': otp_code,
+            'target': phone_or_email,
+            'expires_at': expires_at.isoformat()
         })
 
 class VerifyOTPView(APIView):
@@ -104,13 +121,27 @@ class VerifyOTPView(APIView):
 
     def post(self, request):
         phone_or_email = request.data.get('phone_or_email')
-        otp = request.data.get('otp')
-        if otp != '123456':
-            return Response({'detail': 'Invalid OTP code'}, status=status.HTTP_400_BAD_REQUEST)
+        otp_code = request.data.get('otp')
         
+        if not phone_or_email or not otp_code:
+            return Response({'detail': 'Phone/email and OTP code are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        otp_obj = EmailOTP.objects.filter(
+            email_or_phone=phone_or_email,
+            otp_code=otp_code,
+            is_verified=False,
+            expires_at__gte=timezone.now()
+        ).order_by('-created_at').first()
+
+        if not otp_obj:
+            return Response({'detail': 'Invalid or expired OTP code'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        otp_obj.is_verified = True
+        otp_obj.save()
+
         user = User.objects.filter(email=phone_or_email).first() or User.objects.filter(phone_number=phone_or_email).first()
         if not user:
-            return Response({'detail': 'No account associated with this detail'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'OTP verified, but no user account found with this credential'}, status=status.HTTP_404_NOT_FOUND)
 
         refresh = CustomTokenObtainPairSerializer.get_token(user)
         return Response({
@@ -128,27 +159,55 @@ class ForgotPasswordView(APIView):
     def post(self, request):
         email = request.data.get('email')
         user = User.objects.filter(email=email).first()
-        if user:
-            return Response({'message': 'Reset code sent to email', 'otp': '654321'})
-        return Response({'detail': 'Email not registered'}, status=status.HTTP_404_NOT_FOUND)
+        if not user:
+            return Response({'detail': 'Email address not registered'}, status=status.HTTP_404_NOT_FOUND)
+
+        otp_code = str(secrets.randbelow(900000) + 100000)
+        expires_at = timezone.now() + timedelta(minutes=10)
+
+        EmailOTP.objects.create(
+            email_or_phone=email,
+            otp_code=otp_code,
+            expires_at=expires_at
+        )
+
+        return Response({
+            'message': 'Password reset OTP sent to email',
+            'otp': otp_code,
+            'expires_at': expires_at.isoformat()
+        })
 
 class ResetPasswordView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         email = request.data.get('email')
-        otp = request.data.get('otp')
+        otp_code = request.data.get('otp')
         new_password = request.data.get('new_password')
-        if otp != '654321':
-            return Response({'detail': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not email or not otp_code or not new_password:
+            return Response({'detail': 'Email, OTP, and new_password are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        otp_obj = EmailOTP.objects.filter(
+            email_or_phone=email,
+            otp_code=otp_code,
+            is_verified=False,
+            expires_at__gte=timezone.now()
+        ).order_by('-created_at').first()
+
+        if not otp_obj:
+            return Response({'detail': 'Invalid or expired OTP code'}, status=status.HTTP_400_BAD_REQUEST)
         
         user = User.objects.filter(email=email).first()
         if not user:
-            return Response({'detail': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'User account not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        otp_obj.is_verified = True
+        otp_obj.save()
 
         user.set_password(new_password)
         user.save()
-        return Response({'message': 'Password reset successful'})
+        return Response({'message': 'Password reset successfully. You can now login with your new password.'})
 
 # Super Admin Platform Views
 class SuperAdminDashboardMetricsView(APIView):
@@ -206,6 +265,11 @@ class OnboardStaffView(APIView):
         qualification = request.data.get('qualification', 'Bachelor Degree')
         specialization = request.data.get('specialization', 'General')
 
+        if user.institute and user.institute.plan:
+            current_staff_count = User.objects.filter(institute=user.institute, role__in=[User.Role.ADMIN, User.Role.TRAINER]).count()
+            if current_staff_count >= user.institute.plan.max_staff:
+                return Response({'detail': f'Subscription Plan limit reached ({user.institute.plan.max_staff} max staff allowed). Please upgrade your subscription plan to add more staff.'}, status=status.HTTP_403_FORBIDDEN)
+
         if not email or not first_name:
             return Response({'detail': 'Email and first name are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -248,6 +312,11 @@ class OnboardStudentView(APIView):
         user = request.user
         if user.role not in [User.Role.ADMIN, User.Role.SUPER_ADMIN, User.Role.TRAINER]:
             return Response({'detail': 'Only Admins or Trainers can onboard students.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if user.institute and user.institute.plan:
+            current_student_count = User.objects.filter(institute=user.institute, role=User.Role.STUDENT).count()
+            if current_student_count >= user.institute.plan.max_students:
+                return Response({'detail': f'Subscription Plan limit reached ({user.institute.plan.max_students} max students allowed). Please upgrade your subscription plan to add more students.'}, status=status.HTTP_403_FORBIDDEN)
 
         email = request.data.get('email')
         first_name = request.data.get('first_name')

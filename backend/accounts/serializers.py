@@ -38,6 +38,9 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         institute_code = validated_data.pop('institute_code', None)
         password = validated_data.pop('password')
+        # PUBLIC REGISTRATION SECURITY LOCKDOWN:
+        # Force role to STUDENT. Public users CANNOT self-assign ADMIN, TRAINER, or SUPER_ADMIN roles.
+        validated_data['role'] = User.Role.STUDENT
 
         institute = None
         if institute_code:

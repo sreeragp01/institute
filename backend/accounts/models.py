@@ -98,3 +98,20 @@ class User(AbstractUser):
         inst = self.institute.code if self.institute else "GLOBAL"
         return f"[{inst}] {self.email} ({self.get_role_display()})"
 
+from django.utils import timezone
+from datetime import timedelta
+
+class EmailOTP(models.Model):
+    email_or_phone = models.CharField(max_length=150, db_index=True)
+    otp_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_verified = models.BooleanField(default=False)
+
+    def is_valid(self):
+        return not self.is_verified and timezone.now() <= self.expires_at
+
+    def __str__(self):
+        return f"OTP for {self.email_or_phone}: {self.otp_code} (Valid: {self.is_valid()})"
+
+

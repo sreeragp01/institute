@@ -3,7 +3,7 @@ import math
 import hmac
 import hashlib
 import time
-from datetime import date
+from datetime import date, timedelta
 from rest_framework import views, permissions, status
 from rest_framework.response import Response
 from .models import AttendanceSession, AttendanceRecord
@@ -154,7 +154,7 @@ class GPSAttendanceView(views.APIView):
         distance = haversine_distance_meters(student_lat, student_lon, campus_lat, campus_lon)
 
         allowed_radius_meters = 150.0 # 150 meter geofence radius
-        if distance > allowed_radius_meters and not (student_lat == 0 and student_lon == 0):
+        if distance > allowed_radius_meters:
             return Response({
                 'detail': f'Geofence verification failed. You are {round(distance, 1)}m away from campus (max allowed: {allowed_radius_meters}m).'
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -190,17 +190,46 @@ class ManualRollCallView(views.APIView):
         if request.user.role not in [User.Role.TRAINER, User.Role.ADMIN, User.Role.SUPER_ADMIN]:
             return Response({'detail': 'Only Trainers or Admins can submit manual roll call.'}, status=status.HTTP_403_FORBIDDEN)
 
-        marked_count = 0
+        session = AttendanceSession.objects.filter(id=session_id).first() if session_id else None
+        if not session:
+            batch = Batch.objects.filter(course__institute=request.user.institute).first() or Batch.objects.first()
+            subject = Subject.objects.filter(course__institute=request.user.institute).first() or Subject.objects.first()
+            
+            if not batch:
+                from courses.models import Course
+                c, _ = Course.objects.get_or_create(institute=request.user.institute, code='GEN-101', defaults={'name': 'General Course'})
+                batch, _ = Batch.objects.get_or_create(
+                    course=c, name='Main Batch',
+                    defaults={'start_date': date.today(), 'end_date': date.today() + timedelta(days=180), 'trainer': request.user}
+                )
+
+            if not subject:
+                subject, _ = Subject.objects.get_or_create(course=batch.course, code='GEN-SUB', defaults={'name': 'General Training'})
+
+            session = AttendanceSession.objects.create(
+                institute=request.user.institute,
+                batch=batch,
+                subject=subject,
+                trainer=request.user,
+                date=date.today(),
+                qr_code_secret=f"MANUAL-ROLL-{uuid.uuid4().hex[:8]}"
+            )
+
+        saved_count = 0
         if isinstance(records, list):
             for r in records:
                 student_id = r.get('student_id')
-                status_val = r.get('status', 'PRESENT')
-                if student_id:
-                    marked_count += 1
+                status_val = str(r.get('status', 'PRESENT')).upper()
+                st_user = User.objects.filter(id=student_id).first() if student_id else None
+                if st_user:
+                    rec, _ = AttendanceRecord.objects.get_or_create(session=session, student=st_user)
+                    rec.status = AttendanceRecord.Status.PRESENT if status_val == 'PRESENT' else AttendanceRecord.Status.ABSENT
+                    rec.save()
+                    saved_count += 1
 
         return Response({
-            'message': f'Manual roll call complete. {marked_count} student attendance records saved.',
-            'marked_count': marked_count,
-            'session_id': session_id or 42
+            'message': f'Manual roll call complete. {saved_count} student attendance records saved to database.',
+            'marked_count': saved_count,
+            'session_id': str(session.id)
         })
 

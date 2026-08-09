@@ -30,4 +30,5 @@ class TenantScopedQuerySetMixin:
         elif 'batch' in field_names:
             return queryset.filter(batch__course__institute=user.institute)
 
-        return queryset
+        # Fail-closed: Return empty queryset if no tenant field is recognized
+        return queryset.none()
