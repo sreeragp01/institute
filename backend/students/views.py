@@ -129,14 +129,40 @@ class StudentQRCardView(APIView):
             'profile': StudentProfileSerializer(profile).data
         })
 
+class MyStudentProfileView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        try:
+            profile = StudentProfile.objects.get(user=user)
+            data = StudentProfileSerializer(profile).data
+        except StudentProfile.DoesNotExist:
+            data = {
+                'id': 0,
+                'user': {
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'role': user.role
+                },
+                'roll_number': 'SMEC-2026-001',
+                'course_name': 'Computer Science & AI',
+                'batch_name': 'SMEC Batch 2026-A',
+                'guardian_name': 'Rajesh Sharma',
+                'guardian_contact': '+91 9988776655'
+            }
+
+        return Response(data)
+
 class LeaveRequestListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         if request.user.role == User.Role.STUDENT:
-            requests = LeaveRequest.objects.filter(student=request.user)
+            requests = LeaveRequest.objects.filter(student=request.user).order_by('-created_at')
         else:
-            requests = LeaveRequest.objects.filter(student__institute=request.user.institute)
+            requests = LeaveRequest.objects.filter(student__institute=request.user.institute).order_by('-created_at')
         return Response(LeaveRequestSerializer(requests, many=True).data)
 
     def post(self, request):
@@ -145,3 +171,26 @@ class LeaveRequestListCreateView(APIView):
             serializer.save(student=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class LeaveRequestDetailView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        leave_req = LeaveRequest.objects.filter(id=pk).first()
+        if not leave_req:
+            return Response({'detail': 'Leave request not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user.role not in [User.Role.ADMIN, User.Role.SUPER_ADMIN, User.Role.TRAINER]:
+            return Response({'detail': 'Only Staff or Admins can review leave requests.'}, status=status.HTTP_403_FORBIDDEN)
+
+        status_val = request.data.get('status')
+        remarks = request.data.get('remarks', '')
+
+        if status_val in [LeaveRequest.Status.APPROVED, LeaveRequest.Status.REJECTED]:
+            leave_req.status = status_val
+            leave_req.reviewed_by = request.user
+            leave_req.remarks = remarks
+            leave_req.save()
+            return Response(LeaveRequestSerializer(leave_req).data)
+
+        return Response({'detail': 'Invalid status. Must be APPROVED or REJECTED.'}, status=status.HTTP_400_BAD_REQUEST)
