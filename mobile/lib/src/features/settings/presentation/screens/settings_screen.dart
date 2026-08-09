@@ -164,7 +164,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: AppColors.primaryNavy),
+                      icon: const Icon(Icons.arrow_back_rounded, color: AppColors.cyberCyan),
                       onPressed: () => context.pop(),
                     ),
                     Text('App Settings & Preferences', style: AppTypography.header2(color: AppColors.textPrimary)),
@@ -410,10 +410,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppColors.primaryNavy.withValues(alpha: 0.08),
+          color: AppColors.cyberCyan.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, color: AppColors.primaryNavy, size: 20),
+        child: Icon(icon, color: AppColors.cyberCyan, size: 20),
       ),
       title: Text(title, style: AppTypography.subtitle(color: AppColors.textPrimary)),
       subtitle: Text(subtitle, style: AppTypography.caption(color: AppColors.textMuted)),
@@ -434,17 +434,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: AppColors.primaryNavy.withValues(alpha: 0.08),
+          color: AppColors.cyberCyan.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, color: AppColors.primaryNavy, size: 20),
+        child: Icon(icon, color: AppColors.cyberCyan, size: 20),
       ),
       title: Text(title, style: AppTypography.subtitle(color: AppColors.textPrimary)),
       subtitle: Text(subtitle, style: AppTypography.caption(color: AppColors.textMuted)),
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeTrackColor: AppColors.primaryNavy,
+        activeThumbColor: AppColors.cyberCyan,
       ),
     );
   }

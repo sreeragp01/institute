@@ -20,7 +20,7 @@ class NotificationCenterScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: AppColors.primaryNavy),
+                      icon: const Icon(Icons.arrow_back_rounded, color: AppColors.cyberCyan),
                       onPressed: () => context.pop(),
                     ),
                     Text('Notification Center', style: AppTypography.header2(color: AppColors.textPrimary)),
