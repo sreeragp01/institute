@@ -7,8 +7,8 @@ class TicketResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TicketResponse
-        fields = '__all__'
-        read_only_fields = ('created_at', 'user')
+        fields = ['id', 'ticket', 'user', 'user_email', 'user_name', 'message', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
 
 class SupportTicketSerializer(serializers.ModelSerializer):
     created_by_email = serializers.ReadOnlyField(source='created_by.email')
@@ -17,5 +17,5 @@ class SupportTicketSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SupportTicket
-        fields = '__all__'
-        read_only_fields = ('created_at', 'updated_at', 'created_by', 'institute')
+        fields = ['id', 'institute', 'created_by', 'created_by_email', 'created_by_name', 'subject', 'description', 'category', 'priority', 'status', 'responses', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'institute', 'created_by', 'created_at', 'updated_at']

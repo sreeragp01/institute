@@ -38,6 +38,10 @@ class Institute(models.Model):
     primary_color = models.CharField(max_length=10, default='#1E40AF') # Deep Blue
     accent_color = models.CharField(max_length=10, default='#06B6D4') # Cyber Cyan
     
+    latitude = models.FloatField(default=9.9312) # Default Kochi Campus Lat
+    longitude = models.FloatField(default=76.2673) # Default Kochi Campus Lon
+    geofence_radius_meters = models.FloatField(default=150.0) # Geofence radius in meters
+    
     academic_year = models.CharField(max_length=20, default='2026-2027')
     working_days = models.JSONField(default=list, blank=True) # e.g. ["Mon", "Tue", "Wed", "Thu", "Fri"]
     time_zone = models.CharField(max_length=50, default='UTC')

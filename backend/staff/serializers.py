@@ -1,21 +1,18 @@
 from rest_framework import serializers
-from accounts.models import User
-from accounts.serializers import UserSerializer
-from courses.serializers import SubjectSerializer
 from .models import TrainerProfile, StaffLeaveRequest
 
 class TrainerProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    assigned_subjects = SubjectSerializer(many=True, read_only=True)
+    user_email = serializers.CharField(source='user.email', read_only=True)
 
     class Meta:
         model = TrainerProfile
-        fields = ['id', 'user', 'employee_id', 'qualification', 'specialization', 'assigned_subjects', 'monthly_salary', 'joining_date']
+        fields = ['id', 'user', 'user_email', 'employee_id', 'qualification', 'specialization', 'monthly_salary', 'joining_date']
+        read_only_fields = ['id', 'user', 'employee_id']
 
 class StaffLeaveRequestSerializer(serializers.ModelSerializer):
     trainer_name = serializers.CharField(source='trainer.get_full_name', read_only=True)
 
     class Meta:
         model = StaffLeaveRequest
-        fields = '__all__'
-        read_only_fields = ['trainer', 'status', 'reviewed_by']
+        fields = ['id', 'trainer', 'trainer_name', 'from_date', 'to_date', 'reason', 'status', 'reviewed_by', 'remarks', 'created_at']
+        read_only_fields = ['id', 'trainer', 'status', 'reviewed_by', 'created_at']

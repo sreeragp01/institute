@@ -110,8 +110,7 @@ class RequestOTPView(APIView):
         )
 
         return Response({
-            'message': 'OTP generated and sent successfully (valid for 10 minutes)',
-            'otp_code': otp_code,
+            'message': 'OTP generated and sent successfully to registered destination (valid for 10 minutes)',
             'target': phone_or_email,
             'expires_at': expires_at.isoformat()
         })
@@ -172,8 +171,8 @@ class ForgotPasswordView(APIView):
         )
 
         return Response({
-            'message': 'Password reset OTP sent to email',
-            'otp': otp_code,
+            'message': 'Password reset OTP sent to registered email address (valid for 10 minutes)',
+            'target': email,
             'expires_at': expires_at.isoformat()
         })
 
@@ -224,16 +223,21 @@ class SuperAdminDashboardMetricsView(APIView):
         active_institutes = Institute.objects.filter(subscription_status=Institute.SubscriptionStatus.ACTIVE).count()
         trial_institutes = Institute.objects.filter(subscription_status=Institute.SubscriptionStatus.TRIAL).count()
 
+        from payments.models import FeePayment
+        from support.models import SupportTicket
+
+        paid_revenue = sum([p.amount for p in FeePayment.objects.filter(status=FeePayment.Status.PAID)])
+        open_tickets = SupportTicket.objects.filter(status='OPEN').count()
+
         return Response({
             'total_institutes': total_institutes,
             'active_institutes': active_institutes,
             'trial_institutes': trial_institutes,
             'total_students': total_students,
             'total_staff': total_staff,
-            'monthly_revenue_usd': total_institutes * 299.00,
-            'total_ai_tokens_consumed': 1425000,
+            'monthly_revenue_usd': float(paid_revenue),
             'system_health': 'OPERATIONAL',
-            'support_tickets_open': 3
+            'support_tickets_open': open_tickets
         })
 
 class SuperAdminInstituteListView(generics.ListCreateAPIView):
@@ -259,7 +263,7 @@ class OnboardStaffView(APIView):
         email = request.data.get('email')
         first_name = request.data.get('first_name')
         last_name = request.data.get('last_name', '')
-        password = request.data.get('password', 'staff123')
+        password = request.data.get('password') or secrets.token_urlsafe(10)
         role = request.data.get('role', User.Role.TRAINER)
         phone = request.data.get('phone_number', '')
         qualification = request.data.get('qualification', 'Bachelor Degree')
@@ -301,7 +305,8 @@ class OnboardStaffView(APIView):
 
         return Response({
             'message': f'Staff member {email} onboarded successfully.',
-            'user': UserSerializer(staff_user).data
+            'user': UserSerializer(staff_user).data,
+            'temp_password': password
         }, status=status.HTTP_201_CREATED)
 
 
@@ -321,7 +326,7 @@ class OnboardStudentView(APIView):
         email = request.data.get('email')
         first_name = request.data.get('first_name')
         last_name = request.data.get('last_name', '')
-        password = request.data.get('password', 'student123')
+        password = request.data.get('password') or secrets.token_urlsafe(10)
         phone = request.data.get('phone_number', '')
         course_id = request.data.get('course_id')
         batch_id = request.data.get('batch_id')
@@ -351,8 +356,8 @@ class OnboardStudentView(APIView):
         from students.models import StudentProfile
         from courses.models import Course, Batch
 
-        course = Course.objects.filter(id=course_id).first() if course_id else None
-        batch = Batch.objects.filter(id=batch_id).first() if batch_id else None
+        course = Course.objects.filter(id=course_id, institute=user.institute).first() if course_id else None
+        batch = Batch.objects.filter(id=batch_id, course__institute=user.institute).first() if batch_id else None
 
         StudentProfile.objects.create(
             user=student_user,
@@ -366,7 +371,8 @@ class OnboardStudentView(APIView):
         return Response({
             'message': f'Student {email} onboarded successfully.',
             'user': UserSerializer(student_user).data,
-            'roll_number': roll_num
+            'roll_number': roll_num,
+            'temp_password': password
         }, status=status.HTTP_201_CREATED)
 
 

@@ -6,5 +6,11 @@ class EnquirySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Enquiry
-        fields = '__all__'
-        read_only_fields = ('created_at', 'updated_at', 'assigned_counselor_name')
+        fields = ['id', 'institute', 'candidate_name', 'email', 'phone', 'course_interested', 'source', 'status', 'assigned_counselor', 'assigned_counselor_name', 'notes', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'institute', 'created_at', 'updated_at', 'assigned_counselor_name']
+
+    def validate_assigned_counselor(self, value):
+        user = self.context['request'].user
+        if value and value.institute != user.institute:
+            raise serializers.ValidationError("Assigned counselor does not belong to your institute.")
+        return value

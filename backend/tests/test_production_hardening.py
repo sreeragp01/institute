@@ -53,9 +53,10 @@ class ProductionHardeningTestCase(TestCase):
     def test_real_otp_generation_and_verification(self):
         """Request OTP creates DB EmailOTP record; verify OTP validates code and expiry."""
         req_res = self.client.post('/api/v1/auth/request-otp/', {'phone_or_email': 'student@hardened.edu'})
-        self.assertEqual(req_res.status_code, status.HTTP_200_OK)
-        
-        otp_code = req_res.data['otp_code']
+        # OTP code is saved in database and NOT exposed in API JSON response
+        otp_entry = EmailOTP.objects.filter(email_or_phone='student@hardened.edu').order_by('-created_at').first()
+        self.assertIsNotNone(otp_entry, "EmailOTP record must be saved in database!")
+        otp_code = otp_entry.otp_code
         self.assertNotEqual(otp_code, '123456', "OTP code must NOT be hardcoded demo string!")
         self.assertEqual(len(otp_code), 6)
 

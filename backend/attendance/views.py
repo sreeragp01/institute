@@ -30,7 +30,7 @@ class AttendanceSummaryView(views.APIView):
         total = records.count()
         present = records.filter(status=AttendanceRecord.Status.PRESENT).count()
 
-        percentage = round((present / total * 100), 1) if total > 0 else 92.0
+        percentage = round((present / total * 100), 1) if total > 0 else 0.0
 
         # Subject breakdown calculated from actual DB records
         subject_stats = {}
@@ -149,28 +149,48 @@ class GPSAttendanceView(views.APIView):
         except (TypeError, ValueError):
             return Response({'detail': 'Valid numeric Latitude and Longitude coordinates required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Campus reference coordinates (Kochi Tech Park Campus)
-        campus_lat, campus_lon = 9.9312, 76.2673
+        inst = request.user.institute
+        campus_lat = inst.latitude if inst and inst.latitude else 9.9312
+        campus_lon = inst.longitude if inst and inst.longitude else 76.2673
+        allowed_radius_meters = inst.geofence_radius_meters if inst and inst.geofence_radius_meters else 150.0
+
         distance = haversine_distance_meters(student_lat, student_lon, campus_lat, campus_lon)
 
-        allowed_radius_meters = 150.0 # 150 meter geofence radius
         if distance > allowed_radius_meters:
             return Response({
                 'detail': f'Geofence verification failed. You are {round(distance, 1)}m away from campus (max allowed: {allowed_radius_meters}m).'
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        # Save Attendance Record in Database
+        session = AttendanceSession.objects.filter(institute=inst, date=date.today()).first()
+        if not session:
+            batch = Batch.objects.filter(course__institute=inst).first()
+            subject = Subject.objects.filter(course__institute=inst).first()
+            if batch and subject:
+                session = AttendanceSession.objects.create(
+                    institute=inst, batch=batch, subject=subject, trainer=request.user, date=date.today()
+                )
+
+        if session:
+            rec, _ = AttendanceRecord.objects.get_or_create(session=session, student=request.user)
+            rec.status = AttendanceRecord.Status.PRESENT
+            rec.save()
+
         return Response({
-            'message': 'GPS Geofence Verified! Attendance marked PRESENT.',
-            'campus': 'SMEC Ernakulam Main Campus Block A',
+            'message': 'GPS Geofence Verified! Attendance record saved to database as PRESENT.',
+            'campus': inst.name if inst else 'Campus',
             'distance_meters': round(distance, 1),
             'status': 'PRESENT',
             'timestamp': str(date.today())
         })
 
 class BiometricSyncView(views.APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        if request.user.role not in [User.Role.ADMIN, User.Role.SUPER_ADMIN, User.Role.TRAINER]:
+            return Response({'detail': 'Only authorized device gateways or staff accounts can post biometric logs.'}, status=status.HTTP_403_FORBIDDEN)
+
         device_id = request.data.get('device_id')
         biometric_payload = request.data.get('payload', [])
 

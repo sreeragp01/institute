@@ -5,6 +5,7 @@ from payments.models import FeePayment
 from assignments.models import Assignment
 from students.models import StudentProfile
 from accounts.models import User
+from courses.models import Course
 
 class AIChatbotView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -22,22 +23,22 @@ class AIChatbotView(views.APIView):
             records = AttendanceRecord.objects.filter(student=user)
             tot = records.count()
             pres = records.filter(status=AttendanceRecord.Status.PRESENT).count()
-            pct = round(pres / tot * 100, 1) if tot > 0 else 92.0
-            reply = f"Hello {user.first_name}! Your live overall attendance in the database is {pct}% ({pres}/{tot} sessions attended). Requirements threshold: 75%."
+            pct = round(pres / tot * 100, 1) if tot > 0 else 0.0
+            reply = f"Hello {user.first_name or 'Student'}! Your live overall attendance in the database is {pct}% ({pres}/{tot} sessions attended)."
 
         elif 'fee' in query_lower or 'pending' in query_lower or 'payment' in query_lower:
             if user.role in [User.Role.ADMIN, User.Role.SUPER_ADMIN]:
-                pending_count = FeePayment.objects.filter(status=FeePayment.Status.PENDING).count()
+                pending_count = FeePayment.objects.filter(institute=user.institute, status=FeePayment.Status.PENDING).count() if user.institute else FeePayment.objects.filter(status=FeePayment.Status.PENDING).count()
                 reply = f"AI Institute Copilot Report: There are currently {pending_count} pending fee payment(s) across active students."
             else:
                 fee = FeePayment.objects.filter(student=user).first()
                 if fee:
                     reply = f"Your fee record shows an amount of ₹{fee.amount:,.2f} status '{fee.status}' due on {fee.due_date}."
                 else:
-                    reply = "No pending fee installments found for your account in SMEC portal."
+                    reply = "No pending fee installments found for your account."
 
         elif 'assignment' in query_lower or 'homework' in query_lower:
-            assignments = Assignment.objects.filter(batch__course__institute=user.institute)
+            assignments = Assignment.objects.filter(batch__course__institute=user.institute) if user.institute else Assignment.objects.all()
             count = assignments.count()
             latest = assignments.first()
             if latest:
@@ -101,43 +102,61 @@ class AIAttendancePredictorView(views.APIView):
 
     def get(self, request):
         user = request.user
-        # Calculate real risk level from AttendanceRecords
-        low_att_records = AttendanceRecord.objects.values('student').distinct().count()
-        
+        inst = user.institute
+
+        students_in_inst = User.objects.filter(institute=inst, role=User.Role.STUDENT) if inst else User.objects.filter(role=User.Role.STUDENT)
+        high_risk_students = []
+
+        for st in students_in_inst:
+            recs = AttendanceRecord.objects.filter(student=st)
+            tot = recs.count()
+            if tot > 0:
+                pres = recs.filter(status=AttendanceRecord.Status.PRESENT).count()
+                pct = round(pres / tot * 100, 1)
+                if pct < 75.0:
+                    high_risk_students.append({
+                        'student_id': st.id,
+                        'name': st.get_full_name() or st.email,
+                        'attendance_pct': pct,
+                        'dropout_risk_pct': round(100.0 - pct, 1),
+                        'reason': f'Low attendance ({pct}% across {tot} sessions)'
+                    })
+
+        risk_level = 'HIGH' if len(high_risk_students) > 3 else ('MEDIUM' if len(high_risk_students) > 0 else 'LOW')
+
         return Response({
-            'predicted_risk_level': 'LOW' if low_att_records < 5 else 'MEDIUM',
-            'overall_attendance_trend': '+3.2% vs last month',
-            'students_at_risk_count': low_att_records,
-            'high_risk_students': [
-                {'student_id': 104, 'name': 'Aditya Verma', 'attendance_pct': 64.5, 'dropout_risk_pct': 78, 'reason': 'Consecutive Monday absences'},
-                {'student_id': 112, 'name': 'Pooja Sharma', 'attendance_pct': 68.0, 'dropout_risk_pct': 65, 'reason': 'Late submission & low engagement'}
-            ],
-            'recommendation': 'Trigger automated SMS alerts to parents and schedule 1-on-1 counselor meetings for students below 70% attendance.'
+            'predicted_risk_level': risk_level,
+            'students_at_risk_count': len(high_risk_students),
+            'high_risk_students': high_risk_students,
+            'recommendation': 'Trigger automated alerts and schedule meetings for students below 75% attendance threshold.' if len(high_risk_students) > 0 else 'All active students are meeting minimum attendance requirements.'
         })
 
 class AIReportGeneratorView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        st_count = StudentProfile.objects.count()
-        fees_collected = FeePayment.objects.filter(status=FeePayment.Status.PAID).count()
+        user = request.user
+        inst = user.institute
+
+        if inst:
+            st_count = StudentProfile.objects.filter(user__institute=inst).count()
+            fees_collected = FeePayment.objects.filter(institute=inst, status=FeePayment.Status.PAID).count()
+            courses_count = Course.objects.filter(institute=inst).count()
+        else:
+            st_count = StudentProfile.objects.count()
+            fees_collected = FeePayment.objects.filter(status=FeePayment.Status.PAID).count()
+            courses_count = Course.objects.count()
 
         return Response({
-            'report_title': 'SMEC Connect Monthly Executive AI Report',
-            'generated_at': '2026-08-04',
+            'report_title': f"{inst.name if inst else 'Platform'} Monthly Executive AI Report",
             'key_insights': [
                 f'Total Enrolled Students: {st_count}.',
-                f'Completed Fee Transactions: {fees_collected}.',
-                'AI Study Assistant usage increased by 42%, boosting quiz pass rates by 11%.'
+                f'Completed Fee Payments: {fees_collected}.',
+                f'Active Academic Courses: {courses_count}.'
             ],
-            'chart_data': {
-                'monthly_admissions': [45, 52, 60, 78, 92, 110],
-                'revenue_trend_usd': [12000, 15500, 18000, 22000, 26500, 31000],
-                'attendance_by_branch': {'Main Campus': 91.5, 'North Branch': 88.2, 'Online Virtual': 94.0}
-            },
             'ai_suggestions': [
-                'Consider introducing weekend batches for Advanced Data Science due to high inquiry demand.',
-                'Send fee reminder notifications 3 days prior to due dates to reduce pending balances.'
+                'Send fee reminder notifications 3 days prior to due dates to reduce pending balances.',
+                'Schedule review sessions for batches with pending assignments.'
             ]
         })
 
@@ -165,4 +184,3 @@ class AIQuizGeneratorView(views.APIView):
                 },
             ]
         })
-
